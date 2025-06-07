@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
@@ -7,6 +10,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { User } from '../user.entity';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
@@ -20,6 +24,16 @@ import { User } from '../user.entity';
       }),
       inject: [ConfigService],
     }),
+    ClientsModule.register([
+      {
+        name: 'EMAIL_SERVICE',
+        transport: Transport.REDIS,
+        options: {
+          host: 'localhost',
+          port: 6379,
+        },
+      },
+    ]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

@@ -2,12 +2,14 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../user.entity';
+import { ClientProxy } from '@nestjs/microservices';
 
 export interface LoginDto {
   email: string;
@@ -30,6 +32,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    @Inject('EMAIL_SERVICE') private client: ClientProxy,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ access_token: string }> {
@@ -57,6 +60,14 @@ export class AuthService {
 
     // Generate JWT token
     const payload: JwtPayload = { sub: user.id, email: user.email };
+
+    // Send email
+    this.client.emit('send-email', {
+      to: user.email,
+      subject: 'Welcome to our app',
+      text: 'Thank you for registering',
+    });
+
     return {
       access_token: this.jwtService.sign(payload),
     };
